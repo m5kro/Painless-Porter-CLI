@@ -141,14 +141,14 @@ if [ -n "$game_en_exe" ]; then
 
   command -v python  >/dev/null 2>&1 || { echo >&2 "python is required but it's not installed. Aborting."; exit 1; }
   if [ ! -d ./evbunpack ]; then
-    python -m venv ./evbunpack
-    source ./evbunpack/bin/activate
+    python -m venv $XDG_DATA_HOME/porter/evbunpack
+    source $XDG_DATA_HOME/porter/evbunpack/bin/activate
     pip install evbunpack
     deactivate
-  else echo "./evbunpack found, skipping venv creation."
+  else echo "evbunpack found, skipping venv creation."
   fi
 
-  source ./evbunpack/bin/activate
+  source $XDG_DATA_HOME/porter/evbunpack/bin/activate
   evbunpack "$game_en_exe" ./en-extracted/
   deactivate
 
