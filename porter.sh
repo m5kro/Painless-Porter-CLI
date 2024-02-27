@@ -6,6 +6,9 @@ function display_usage {
   exit 1
 }
 
+# nwjs version
+nwjsv=0.84.0
+
 # Parse command line arguments
 extract=true
 upload=true
@@ -58,12 +61,12 @@ rm -rf gofile.txt
 touch gofile.txt
 
 # Extract nwjs files
-unzip nwjs-sdk-v0.78.1-osx-arm64.zip
-unzip nwjs-sdk-v0.78.1-osx-x64.zip
+unzip nwjs-sdk-v"$nwjsv"-osx-arm64.zip
+unzip nwjs-sdk-v"$nwjsv"-osx-x64.zip
 
 # Prep osx
-mkdir nwjs-sdk-v0.78.1-osx-arm64/nwjs.app/Contents/Resources/app.nw
-mkdir nwjs-sdk-v0.78.1-osx-x64/nwjs.app/Contents/Resources/app.nw
+mkdir nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
+mkdir nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
 
 # Prep linux
 mkdir linux
@@ -175,14 +178,14 @@ www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
 if [ -n "$www_folder" ]; then
   # If 'www' folder exists, copy it to the uncompressed nwjs folder
   cp -r "$www_folder" linux/www
-  cp -r "$www_folder" nwjs-sdk-v0.78.1-osx-arm64/nwjs.app/Contents/Resources/app.nw
-  cp -r "$www_folder" nwjs-sdk-v0.78.1-osx-x64/nwjs.app/Contents/Resources/app.nw
+  cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
+  cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
   # Put the game name in package.json so it runs
   game_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')
   jq ".name = \"$game_name\"" package-template.json > package.json
   cp package.json linux/
-  cp package.json nwjs-sdk-v0.78.1-osx-arm64/nwjs.app/Contents/Resources/app.nw
-  cp package.json nwjs-sdk-v0.78.1-osx-x64/nwjs.app/Contents/Resources/app.nw
+  cp package.json nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
+  cp package.json nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
 else
   echo "www folder missing"
   exit
@@ -197,13 +200,13 @@ new_linux_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Linux"
 mv linux "$new_linux_folder_name"
 
 new_osx_arm64_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-arm64.app"
-mv nwjs-sdk-v0.78.1-osx-arm64/nwjs.app "$new_osx_arm64_folder_name"
+mv nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app "$new_osx_arm64_folder_name"
 
 new_osx_x64_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-x64.app"
-mv nwjs-sdk-v0.78.1-osx-x64/nwjs.app "$new_osx_x64_folder_name"
+mv nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app "$new_osx_x64_folder_name"
 
-rm -rf nwjs-sdk-v0.78.1-osx-arm64
-rm -rf nwjs-sdk-v0.78.1-osx-x64
+rm -rf nwjs-sdk-v"$nwjsv"-osx-arm64
+rm -rf nwjs-sdk-v"$nwjsv"-osx-x64
 
 echo "Unpacking and copying completed successfully."
 if [ "$compress" = true ]; then
