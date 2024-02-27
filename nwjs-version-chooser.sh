@@ -44,9 +44,9 @@ if command -v curl > /dev/null 2>&1; then
         	fi
         fi
     else
-        echo "nwjs not found! Downloading version 0.78.1 (default version)"
+        echo "nwjs not found! Downloading version 0.84.0 (default version)"
         mkdir ~/.local/share/porter
-        download 0.78.1
+        download 0.84.0
         curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/share/porter/cicpoffs
         chmod +x ~/.local/share/porter/cicpoffs
 	fi
