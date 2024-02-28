@@ -193,7 +193,7 @@ fi
 
 # Copy start.sh to the linux folder
 cp start.sh linux
-cp nwjs-version-chooser.sh linux
+cp nwjs-manager.sh linux
 
 # Extract name without extension and append -Linux
 new_linux_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Linux"
