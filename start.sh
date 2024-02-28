@@ -3,7 +3,7 @@ set -e
 command -v attr >/dev/null 2>&1 || { echo >&2 "attr is required but it's not installed. Aborting."; exit 1; }
 
 nwjs_loc=~/.local/share/porter/nwjs/nw
-cicpoffs_loc=~/.local/share/porter/cicpoffs
+cicpoffs_loc=~/.local/bin/cicpoffs
 
 if [ -f ./nw ] && [ -f ./cicpoffs ]; then
     echo "using nwjs and cicpoffs version found in the same directory!"
@@ -22,8 +22,8 @@ else
             mv ~/.local/share/porter/nwjs-sdk-v0.84.0-linux-x64 ~/.local/share/porter/nwjs
             rm -f ~/.local/share/porter/nwjs.tar.gz
             echo "0.84.0" > ~/.local/share/porter/nwjs/nwjs-version.txt
-            curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/share/porter/cicpoffs
-            chmod +x ~/.local/share/porter/cicpoffs
+            curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/bin/cicpoffs
+            chmod +x ~/.local/bin/cicpoffs
         else
             echo "curl not found! Please install it from your package manager!"
             exit
