@@ -13,20 +13,28 @@ else
     if [ -f ~/.local/share/porter/nwjs/nw ]; then
         echo "nwjs found!"
     else
-        echo "nwjs not found! Downloading version 0.84.0 (latest as of this script)"
+        echo "nwjs not found! Downloading version 0.84.0 (latest as of this script)..."
         mkdir ~/.local/share/porter
         if command -v curl > /dev/null 2>&1; then
-            echo "curl found! Downloading..."
             curl https://dl.nwjs.io/v0.84.0/nwjs-sdk-v0.84.0-linux-x64.tar.gz -o ~/.local/share/porter/nwjs.tar.gz
             tar -xzvf ~/.local/share/porter/nwjs.tar.gz -C ~/.local/share/porter/
             mv ~/.local/share/porter/nwjs-sdk-v0.84.0-linux-x64 ~/.local/share/porter/nwjs
             rm -f ~/.local/share/porter/nwjs.tar.gz
             echo "0.84.0" > ~/.local/share/porter/nwjs/nwjs-version.txt
+        else
+            echo "curl not found! Please install it from your package manager!"
+            exit
+        fi
+    fi
+    if [ -f ~/.local/bin/cicpoffs ]; then
+        echo "cicpoffs found!"
+    else
+        echo "cicpoffs not found! Downloading..."
+        if command -v curl > /dev/null 2>&1; then
             curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/bin/cicpoffs
             chmod +x ~/.local/bin/cicpoffs
         else
             echo "curl not found! Please install it from your package manager!"
-            exit
         fi
     fi
 fi
