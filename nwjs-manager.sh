@@ -2,8 +2,15 @@
 
 set -e
 
-command -v curl >/dev/null 2>&1 || { echo >&2 "curl is required but it's not installed. Aborting."; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo >&2 "jq is required but it's not installed. Aborting."; exit 1; }
+if ! command -v curl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+    echo >&2 "curl and/or jq is required but not installed. Attempting to install..."
+    if sudo ./pacapt -S curl jq; then
+        echo "curl and jq installed successfully."
+    else
+        echo >&2 "Failed to install curl and jq using pacapt. Please install using your preffered package manager. Aborting."
+        exit 1
+    fi
+fi
 
 URL="https://nwjs.io/versions"
 TMP_FILE="/tmp/versions.json"

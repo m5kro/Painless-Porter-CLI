@@ -1,6 +1,26 @@
-#!/bin/bash
+#!/bin/env bash
 set -e
-command -v attr >/dev/null 2>&1 || { echo >&2 "attr is required but it's not installed. Aborting."; exit 1; }
+
+if ! command -v curl >/dev/null 2>&1 || ! command -v attr >/dev/null 2>&1; then
+    echo >&2 "curl and/or attr is required but not installed. Attempting to install..."
+    if sudo ./pacapt -S curl attr; then
+        echo "curl and attr installed successfully."
+    else
+        echo >&2 "Failed to install curl and attr using pacapt. Please install using your preffered package manager. Aborting."
+        exit 1
+    fi
+fi
+
+# Seperate to prevent possible fuse2 and fuse3 conflict error
+if ! command -v fusermount >/dev/null 2>&1; then
+    echo >&2 "FUSE is required but not installed. Attempting to install..."
+    if sudo ./pacapt -S fuse3; then
+        echo "FUSE installed successfully."
+    else
+        echo >&2 "Failed to install FUSE using pacapt. Please install using your preffered package manager. Aborting."
+        exit 1
+    fi
+fi
 
 nwjs_loc=~/.local/share/porter/nwjs/nw
 cicpoffs_loc=~/.local/bin/cicpoffs
@@ -15,27 +35,18 @@ else
     else
         echo "nwjs not found! Downloading version 0.84.0 (latest as of this script)..."
         mkdir ~/.local/share/porter
-        if command -v curl > /dev/null 2>&1; then
-            curl https://dl.nwjs.io/v0.84.0/nwjs-sdk-v0.84.0-linux-x64.tar.gz -o ~/.local/share/porter/nwjs.tar.gz
-            tar -xzvf ~/.local/share/porter/nwjs.tar.gz -C ~/.local/share/porter/
-            mv ~/.local/share/porter/nwjs-sdk-v0.84.0-linux-x64 ~/.local/share/porter/nwjs
-            rm -f ~/.local/share/porter/nwjs.tar.gz
-            echo "0.84.0" > ~/.local/share/porter/nwjs/nwjs-version.txt
-        else
-            echo "curl not found! Please install it from your package manager!"
-            exit
-        fi
+        curl https://dl.nwjs.io/v0.84.0/nwjs-sdk-v0.84.0-linux-x64.tar.gz -o ~/.local/share/porter/nwjs.tar.gz
+        tar -xzvf ~/.local/share/porter/nwjs.tar.gz -C ~/.local/share/porter/
+        mv ~/.local/share/porter/nwjs-sdk-v0.84.0-linux-x64 ~/.local/share/porter/nwjs
+        rm -f ~/.local/share/porter/nwjs.tar.gz
+        echo "0.84.0" > ~/.local/share/porter/nwjs/nwjs-version.txt
     fi
     if [ -f ~/.local/bin/cicpoffs ]; then
         echo "cicpoffs found!"
     else
         echo "cicpoffs not found! Downloading..."
-        if command -v curl > /dev/null 2>&1; then
-            curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/bin/cicpoffs
-            chmod +x ~/.local/bin/cicpoffs
-        else
-            echo "curl not found! Please install it from your package manager!"
-        fi
+        curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/bin/cicpoffs
+        chmod +x ~/.local/bin/cicpoffs
     fi
 fi
 
@@ -46,16 +57,12 @@ else
     exit
 fi
 
-if command -v fusermount > /dev/null 2>&1; then
-    echo "FUSE found! Moving to case insensitive."
-    mv "www" "www-case"
-    mkdir "www"
-    "$cicpoffs_loc" "./www-case" "./www"
-    echo "Waiting for FUSE..."
-    sleep 3
-else
-    echo "FUSE not found! Sticking with case sensitive."
-fi
+echo "Moving to case insensitive..."
+mv "www" "www-case"
+mkdir "www"
+"$cicpoffs_loc" "./www-case" "./www"
+echo "Waiting for FUSE..."
+sleep 3
 
 if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
 echo "wayland detected"
@@ -65,13 +72,12 @@ echo "wayland not detected, starting in x11"
 "$nwjs_loc" . --ozone-platform=x11
 fi
 
-if command -v fusermount > /dev/null 2>&1; then
-    if [ -d ./www ]; then
-    	echo "unmounting..."
-    	fusermount -u "./www"
-    	rm -rf www
-    	mv "www-case" "www"
-    else
-    	echo "www mount point missing!"
-    fi
+
+if [ -d ./www ]; then
+    echo "unmounting..."
+    fusermount -u "./www"
+    rm -rf www
+    mv "www-case" "www"
+else
+    echo "www mount point missing!"
 fi

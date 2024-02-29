@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # Function to display usage information
 function display_usage {
