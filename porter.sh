@@ -108,6 +108,8 @@ game_exe_path=$(find ./extracted/ -type f -name *exe -printf '%h\n' -quit)
 www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
 if [ -n "$www_folder" ]; then
   echo "rpg mv detected"
+  package_json_old=$(find ./extracted/ -type f -name "package.json" -print -quit | head -n 1)
+  cp "$package_json_old" ./package.json.old
 else
   echo "rpg mz detected"
   # If 'www' folder does not exist, look for specific folders and files for rpgmz
@@ -182,7 +184,12 @@ if [ -n "$www_folder" ]; then
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
   # Put the game name in package.json so it runs
   game_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')
-  jq ".name = \"$game_name\"" package-template.json > package.json
+  if [ -f ./package.json.old ]; then
+    jq ".name = \"$game_name\"" package.json.old > package.json
+    rm -rf ./package.json.old
+  else
+    jq ".name = \"$game_name\"" package-template.json > package.json
+  fi
   cp package.json linux/
   cp package.json nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
   cp package.json nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
