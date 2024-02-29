@@ -20,7 +20,8 @@ download() {
     if curl -fSL -o "$tmp_file" "$url" && tar -xzf "$tmp_file" -C "/tmp"
     then
         rm -rf "$target_dir"
-        mv "$extract_dir" "$target_dir"
+        mkdir -p "$target_dir"
+        cp -R "$extract_dir"/* "$target_dir"/
         mkdir "$target_dir"/www
         echo "$version" > "$CURRENT"
         echo "Finished!"
