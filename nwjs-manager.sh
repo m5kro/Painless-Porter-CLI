@@ -1,5 +1,10 @@
 #!/bin/env bash
 
+set -e
+
+command -v curl >/dev/null 2>&1 || { echo >&2 "curl is required but it's not installed. Aborting."; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo >&2 "jq is required but it's not installed. Aborting."; exit 1; }
+
 URL="https://nwjs.io/versions"
 TMP_FILE="/tmp/versions.json"
 CURRENT="$XDG_DATA_HOME/porter/nwjs-version.txt"
@@ -20,57 +25,46 @@ download() {
         echo "$version" > "$CURRENT"
         echo "Finished!"
     else
-        echo "Failed to download or extract $url"
-        exit 1
+        echo "Failed to download or extract $url"; exit 1
     fi
 }
 
-if command -v curl > /dev/null 2>&1; then
-    if command -v jq > /dev/null 2>&1; then
-        # Query the URL and store the response in /tmp.
-        echo -e "Querying available versions...\n"
-        if ! curl -fsSL -o "$TMP_FILE" "$URL"
-        then
-            echo "Failed to download $URL"
-            exit 1
-        fi
+# Query the URL and store the response in /tmp.
+echo -e "Querying available versions...\n"
+if ! curl -fsSL -o "$TMP_FILE" "$URL"
+then
+    echo "Failed to download $URL"; exit 1
+fi
 
-        # Get LATEST version from response.
-        LATEST=$(jq -r '.latest' "$TMP_FILE")
+# Get LATEST version from response.
+LATEST=$(jq -r '.latest' "$TMP_FILE")
 
-        # Get valid VERSIONS from response.
-        VERSIONS=$(jq -r '.versions[].version' "$TMP_FILE" | head -10 | awk '{ORS = (NR%5 ? ", " : "\n")} {print}')
-        echo -e "Available versions:\n$VERSIONS\n"
+# Get valid VERSIONS from response.
+VERSIONS=$(jq -r '.versions[].version' "$TMP_FILE" | head -10 | awk '{ORS = (NR%5 ? ", " : "\n")} {print}')
+echo -e "Available versions:\n$VERSIONS\n"
 
-        echo "This script will download the latest version by default."
+echo -e "Enter a specific version (including the v) if you wish to."`
+`"\nPress Enter to download the latest version:"
 
-        # Wait for user input for 10 seconds.
-        read -t 10 -p "You have 10 seconds to enter a specific version number (including the v) if you wish to: " INPUT
+read INPUT
 
-        # Check if the user entered something.
-        if [ -n "$INPUT" ]
-        then
-            # Check if the entered version is valid.
-            if [[ "$VERSIONS" =~ "$INPUT" ]]
-            then
-                download "$INPUT"
-            else
-                echo "Error: $INPUT is not a valid version."
-                exit 1
-            fi
-        # If the user didn't enter anything.
-        else
-            # If nwjs-version.txt doesn't exist OR if CURRENT version is not LATEST, download the latest version.
-            if [[ ! -f "$CURRENT" ]] || [[ $(cat "$CURRENT") != "$LATEST" ]]; then
-                echo -e "\n"
-                download "$LATEST"
-            else
-                echo -e "\n$LATEST is already up to date."
-            fi
-        fi
+# Check if the user entered something.
+if [[ -n "$INPUT" ]]
+then
+    # Check if the entered version is valid.
+    if [[ "$VERSIONS" =~ "$INPUT" ]]
+    then
+        download "$INPUT"
     else
-        echo "jq is not installed! Please install it through your package manager."
+        echo "Error: $INPUT is not a valid version."
     fi
+# If the user just press Enter.
 else
-    echo "curl is not installed! Please install it through your package manager."
+    # If nwjs-version.txt doesn't exist OR if CURRENT version is not LATEST, download the latest version.
+    if [[ ! -f "$CURRENT" ]] || [[ $(cat "$CURRENT") != "$LATEST" ]]
+    then
+        download "$LATEST"
+    else
+        echo "$LATEST is already up to date."
+    fi
 fi
