@@ -2,22 +2,22 @@
 set -e
 
 if ! command -v curl >/dev/null 2>&1 || ! command -v attr >/dev/null 2>&1; then
-    echo >&2 "curl and/or attr is required but not installed. Attempting to install..."
+    echo "curl and/or attr is required but not installed. Attempting to install..."
     if sudo ./pacapt -S curl attr; then
         echo "curl and attr installed successfully."
     else
-        echo >&2 "Failed to install curl and attr using pacapt. Please install using your preffered package manager. Aborting."
+        echo "Failed to install curl and attr using pacapt. Please install using your preffered package manager. Aborting."
         exit 1
     fi
 fi
 
 # Seperate to prevent possible fuse2 and fuse3 conflict error
 if ! command -v fusermount >/dev/null 2>&1; then
-    echo >&2 "FUSE is required but not installed. Attempting to install..."
+    echo "FUSE is required but not installed. Attempting to install..."
     if sudo ./pacapt -S fuse3; then
         echo "FUSE installed successfully."
     else
-        echo >&2 "Failed to install FUSE using pacapt. Please install using your preffered package manager. Aborting."
+        echo "Failed to install FUSE using pacapt. Please install using your preffered package manager. Aborting."
         exit 1
     fi
 fi
