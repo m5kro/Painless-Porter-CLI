@@ -14,7 +14,7 @@ fi
 # Seperate to prevent possible fuse2 and fuse3 conflict error
 if ! command -v fusermount >/dev/null 2>&1; then
     echo "FUSE is required but not installed. Attempting to install..."
-    if sudo ./pacapt -S fuse3; then
+    if sudo ./pacapt -S fuse; then
         echo "FUSE installed successfully."
     else
         echo "Failed to install FUSE using pacapt. Please install using your preffered package manager. Aborting."
