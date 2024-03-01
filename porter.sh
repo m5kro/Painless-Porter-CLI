@@ -2,7 +2,7 @@
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] <input_file>"
+  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] <input_file>"
   exit 1
 }
 
@@ -15,6 +15,8 @@ upload=true
 compress=true
 cleanup=true
 cheats=true
+decrypt=true
+webp=true
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -35,6 +37,13 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-cheats)
       cheats=false
+      ;;
+    --no-decrypt)
+      decrypt=false
+      webp=false
+      ;;
+    --no-img-rencode)
+      webp=false
       ;;
     -*)
       display_usage
@@ -185,6 +194,30 @@ fi
 
 # Look for the 'www' folder again
 www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
+
+# Check if images are already webp
+if [ "$webp" = true ]; then
+  img=$(find "$www_folder" -type f -name "*.webp" -print -quit)
+  if [ -n "img" ]; then
+    echo "Images are already webp"
+    webp=false
+  else
+    echo "Images are not webp, converting after decryption"
+  fi
+fi
+
+# Check if images are encrypted
+system_json=$(find "$www_folder" -type f -iname "system.json" -print -quit)
+if [ -n "$system_json" ]; then
+  images_encrypted=$(jq -r '.hasEncryptedImages' "$system_json")
+  if [ -n "$images_encrypted" ]; then
+    if $images_encrypted; then
+      echo "Images are encrypted"
+    else
+      echo "Images are not encrypted"
+    fi
+  fi
+fi
 
 if [ -n "$www_folder" ]; then
   # If 'www' folder exists, copy it to the uncompressed nwjs folder
