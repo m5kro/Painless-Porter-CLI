@@ -123,32 +123,40 @@ else
   echo "rpg mz detected"
   # If 'www' folder does not exist, look for specific folders and files for rpgmz
   mkdir "$game_exe_path"/www
-  for folder in audio css js img data effects fonts icon; do
-    folder_path=$(find ./extracted/ -type d -name "$folder" -print -quit)
-    if [ -n "$folder_path" ]; then
-      cp -r "$folder_path" "$game_exe_path"/www/"$folder"
-    else
-      echo "$folder missing"
-      exit 1
-    fi
+  # Copy the game files to the www folder except for the nwjs files
+  exclude_list=(
+    "credits.html"
+    "icudtl.dat"
+    "notification_helper.exe"
+    "package.json"
+    "d3dcompiler_47.dll"
+    "libEGL.dll"
+    "nw_100_percent.pak"
+    "resources.pak"
+    "debug.log"
+    "libGLESv2.dll"
+    "nw_200_percent.pak"
+    "ffmpeg.dll"
+    "locales"
+    "nw.dll"
+    "swiftshader"
+    "Game.exe"
+    "node.dll"
+    "nw_elf.dll"
+    "v8_context_snapshot.bin"
+  )
+  # Loop through files and folders in the game directory
+  for item in "$game_exe_path"/*; do
+      # Get the basename of the item
+      base=$(basename "$item")
+      # Check if the basename is in the exclude list
+      if [[ ! " ${exclude_list[@]} " =~ " ${base} " ]]; then
+          # Copy the item to the www folder
+          cp -r "$item" "$game_exe_path"/www
+      fi
   done
 
-  # If movies folder exists
-  movies_path=$(find ./extracted/ -type d -name movies -print -quit)
-  if [ -n "$movies_path" ]; then
-    cp -r "$movies_path" "$game_exe_path"/www/movies
-  fi
-
-  # Look for index.html and copy it if found
-  index_html=$(find ./extracted/ -type f -name "index.html" -print -quit)
-  if [ -n "$index_html" ]; then
-    cp "$index_html" "$game_exe_path"/www
-  else
-    echo "index.html missing"
-    exit 1
-  fi
-
-  # Find the topmost instance of package.json, and modify it to point to the index.html
+  # Find the topmost instance of package.json, and modify it to point to the index.html in www
   package_json=$(find ./extracted/ -type f -name "package.json" -print -quit)
   if [ -n "$package_json" ]; then
     jq '.main = "www/index.html" | .window.icon = "www/icon/icon.png"' "$package_json" > ./package.json.old
