@@ -222,9 +222,24 @@ if [ -n "$system_json" ]; then
   images_encrypted=$(jq -r '.hasEncryptedImages' "$system_json")
   if [ -n "$images_encrypted" ]; then
     if $images_encrypted; then
-      echo "Images are encrypted"
+      echo "Images are encrypted. Decrypting..."
+
     else
-      echo "Images are not encrypted"
+      echo "Images are unencrypted"
+    fi
+  else
+    # Exclude Loading.png and Window.png from the check
+    manual_check=$(find "$www_folder"/img -type f \( -name "*.png" ! \( -name "Loading.png" -o -name "Window.png" \) \) -print -quit)
+    if [ -n "$manual_check" ]; then
+      echo "Images are unencrypted"
+    else
+      echo "Unable to determine encryption! Manual decryption needed. Would you like to continue?"
+      read -p "Continue? (y/n) " -n 1 -r
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Exiting"
+        exit 1
+      fi
+      webp=false
     fi
   fi
 fi
