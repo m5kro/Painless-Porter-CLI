@@ -126,6 +126,7 @@ else
   # Copy the game files to the www folder except for the nwjs files
   exclude_list=(
     "credits.html"
+    "www"
     "icudtl.dat"
     "notification_helper.exe"
     "package.json"
