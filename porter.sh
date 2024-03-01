@@ -118,6 +118,9 @@ else
     folder_path=$(find ./extracted/ -type d -name "$folder" -print -quit)
     if [ -n "$folder_path" ]; then
       cp -r "$folder_path" "$game_exe_path"/www/"$folder"
+    else
+      echo "$folder missing"
+      exit 1
     fi
   done
 
@@ -131,12 +134,18 @@ else
   index_html=$(find ./extracted/ -type f -name "index.html" -print -quit)
   if [ -n "$index_html" ]; then
     cp "$index_html" "$game_exe_path"/www
+  else
+    echo "index.html missing"
+    exit 1
   fi
 
-  # Find the topmost instance of package.json and copy it to the www folder
+  # Find the topmost instance of package.json, and modify it to point to the index.html
   package_json=$(find ./extracted/ -type f -name "package.json" -print -quit)
   if [ -n "$package_json" ]; then
-    cp "$package_json" "$game_exe_path"/www
+    jq '.main = "www/index.html" | .window.icon = "www/icon/icon.png"' "$package_json" > ./package.json.old
+  else
+    echo "package.json missing"
+    exit 1
   fi
 fi
 
@@ -184,12 +193,8 @@ if [ -n "$www_folder" ]; then
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
   # Put the game name in package.json so it runs
   game_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')
-  if [ -f ./package.json.old ]; then
-    jq ".name = \"$game_name\"" package.json.old > package.json
-    rm -rf ./package.json.old
-  else
-    jq ".name = \"$game_name\"" package-template.json > package.json
-  fi
+  jq ".name = \"$game_name\"" package.json.old > package.json
+  rm -rf ./package.json.old
   cp package.json linux/
   cp package.json nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
   cp package.json nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
