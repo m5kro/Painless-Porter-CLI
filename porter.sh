@@ -125,32 +125,33 @@ else
   mkdir "$game_exe_path"/www
   # Copy the game files to the www folder except for the nwjs files
   exclude_list=(
-    "credits.html"
-    "icudtl.dat"
-    "notification_helper.exe"
-    "package.json"
-    "d3dcompiler_47.dll"
-    "libEGL.dll"
-    "nw_100_percent.pak"
-    "resources.pak"
-    "debug.log"
-    "libGLESv2.dll"
-    "nw_200_percent.pak"
-    "ffmpeg.dll"
-    "locales"
-    "nw.dll"
-    "swiftshader"
-    "Game.exe"
-    "node.dll"
-    "nw_elf.dll"
-    "v8_context_snapshot.bin"
+      "credits.html"
+      "icudtl.dat"
+      "notification_helper.exe"
+      "package.json"
+      "d3dcompiler_47.dll"
+      "libEGL.dll"
+      "nw_100_percent.pak"
+      "resources.pak"
+      "debug.log"
+      "libGLESv2.dll"
+      "nw_200_percent.pak"
+      "ffmpeg.dll"
+      "locales"
+      "nw.dll"
+      "swiftshader"
+      "game.exe"
+      "game_en.exe"
+      "node.dll"
+      "nw_elf.dll"
+      "v8_context_snapshot.bin"
   )
   # Loop through files and folders in the game directory
   for item in "$game_exe_path"/*; do
-      # Get the basename of the item
-      base=$(basename "$item")
-      # Check if the basename is in the exclude list
-      if [[ ! " ${exclude_list[@]} " =~ " ${base} " ]]; then
+      # Get the basename of the item and convert it to lowercase
+    base=$(basename "$item" | tr '[:upper:]' '[:lower:]')
+    # Check if the lowercase basename is in the lowercase exclude list
+    if [[ ! " ${exclude_list[@]} " =~ " ${base} " ]]; then
           # Copy the item to the www folder
           cp -r "$item" "$game_exe_path"/www
       fi
