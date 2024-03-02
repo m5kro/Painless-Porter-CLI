@@ -221,7 +221,7 @@ if [ "$webp" = true ]; then
 fi
 
 # Check if images are encrypted
-images_encrypted=$(jq -r .hasEncryptedImages $www_folder/data/System.json)
+images_encrypted=$(jq -r .hasEncryptedImages "$www_folder/data/System.json")
 if [ -n "$images_encrypted" ]; then
   if $images_encrypted; then
     echo "Images are encrypted. Decrypting..."
