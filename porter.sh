@@ -221,7 +221,8 @@ images_encrypted=$(jq -r .hasEncryptedImages $www_folder/data/System.json)
 if [ -n "$images_encrypted" ]; then
   if $images_encrypted; then
     echo "Images are encrypted. Decrypting..."
-
+    java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$game_exe_path" "$game_exe_path"
+    find "$game_exe_path" -type f \( -name "*.rpgmvp" -o -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.png_" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
   else
     echo "Images are unencrypted"
   fi
