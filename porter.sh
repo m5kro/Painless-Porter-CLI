@@ -266,6 +266,7 @@ fi
 if [ -n "$www_folder" ]; then
   # If 'www' folder exists, copy it to the uncompressed nwjs folder
   cp -r "$www_folder" linux/www
+  cp ./pacapt linux/
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
   # Put the game name in package.json so it runs
