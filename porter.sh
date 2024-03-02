@@ -211,8 +211,8 @@ www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
 
 # Check if images are already webp
 if [ "$webp" = true ]; then
-  img=$(find "$www_folder" -type f -name "*.webp" -print -quit)
-  if [ -n "img" ]; then
+  img=$(find "$www_folder/img" -type f -name "*.webp" -print -quit)
+  if [ -n "$img" ]; then
     echo "Images are already webp"
     webp=false
   else
