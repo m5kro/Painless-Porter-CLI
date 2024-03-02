@@ -2,7 +2,7 @@
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] <input_file>"
+  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] [--no-pixijs-upgrade] <input_file>"
   exit 1
 }
 
@@ -17,6 +17,7 @@ cleanup=true
 cheats=true
 decrypt=true
 webp=true
+pixi=true
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -44,6 +45,9 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-img-rencode)
       webp=false
+      ;;
+    --no-pixijs-upgrade)
+      pixi=false
       ;;
     -*)
       display_usage
@@ -240,6 +244,16 @@ else
     fi
     webp=false
   fi
+fi
+
+if [ "$webp" = true ]; then
+  echo "Converting images to webp..."
+  ./optimize.sh "$game_exe_path"
+fi
+
+if [ "$pixi" = true ]; then
+  echo "Upgrading pixi.js..."
+  ./libs-update.sh "$game_exe_path"
 fi
 
 if [ -n "$www_folder" ]; then
