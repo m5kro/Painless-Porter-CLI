@@ -165,7 +165,7 @@ else
   # Find the topmost instance of package.json, and modify it to point to the index.html in www
   package_json=$(find ./extracted/ -type f -name "package.json" -print -quit)
   if [ -n "$package_json" ]; then
-    jq '.main = "www/index.html" | .window.icon = "www/icon/icon.png"' "$package_json" > ./package.json.old
+    jq '.main = "www/index.html" | .window.icon = "www/icon/icon.png" | .chromium-args = "--enable-gpu-rasterization --force-color-profile=srgb"' "$package_json" > ./package.json.old
   else
     echo "package.json missing"
     exit 1
@@ -233,6 +233,7 @@ if [ -n "$images_encrypted" ]; then
     mv ./System.json.new "$www_folder"/data/System.json
     www_folder_decrypted=$(find ./decrypted -type d -name "www" -print -quit)
     cp -r "$www_folder_decrypted"/* "$www_folder"
+    rm -rf ./decrypted
   else
     echo "Images are unencrypted"
   fi

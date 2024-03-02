@@ -14,6 +14,9 @@ fi
 
 URL="https://nwjs.io/versions"
 TMP_FILE="/tmp/versions.json"
+if [[ -z "$XDG_DATA_HOME" ]]; then
+    XDG_DATA_HOME="$HOME/.local/share"
+fi
 CURRENT="$XDG_DATA_HOME/porter/nwjs-version.txt"
 
 download() {
