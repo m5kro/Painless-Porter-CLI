@@ -225,11 +225,14 @@ images_encrypted=$(jq -r .hasEncryptedImages "$www_folder/data/System.json")
 if [ -n "$images_encrypted" ]; then
   if $images_encrypted; then
     echo "Images are encrypted. Decrypting..."
-    java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" "$www_folder"
+    mkdir ./decrypted
+    java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" ./decrypted
     find "$game_exe_path" -type f \( -name "*.rpgmvp" -o -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.png_" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
     jq '.hasEncryptedImages = false | .hasEncryptedAudio = false' "$www_folder"/data/System.json > ./System.json.new
     rm -f "$www_folder"/data/System.json
     mv ./System.json.new "$www_folder"/data/System.json
+    www_folder_decrypted=$(find ./decrypted -type d -name "www" -print -quit)
+    cp -r "$www_folder_decrypted"/* "$www_folder"
   else
     echo "Images are unencrypted"
   fi
