@@ -2,7 +2,7 @@
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] [--no-pixijs-upgrade] <input_file>"
+  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] [--no-audio-rencode] [--no-pixijs-upgrade] <input_file>"
   exit 1
 }
 
@@ -18,6 +18,7 @@ cheats=true
 decrypt=true
 webp=true
 pixi=true
+opus=true
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -45,6 +46,9 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-img-rencode)
       webp=false
+      ;;
+    --no-audio-rencode)
+      opus=false
       ;;
     --no-pixijs-upgrade)
       pixi=false
@@ -256,6 +260,13 @@ fi
 if [ "$webp" = true ]; then
   echo "Converting images to webp..."
   ./optimize.sh "$game_exe_path"
+fi
+
+if [ "$opus" = true ]; then
+  echo "Converting audio to opus..."
+  ./RMMVOpusConverter --ConverterLocation /usr/bin/ --SourceLocation "$www_folder" --OutputLocation ./opus
+  cp -r ./opus/* "$www_folder"
+  rm -rf ./opus
 fi
 
 if [ "$pixi" = true ]; then
