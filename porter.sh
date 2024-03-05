@@ -262,6 +262,20 @@ if [ "$webp" = true ]; then
   ./optimize.sh "$game_exe_path"
 fi
 
+if [ -f "$www_folder"/js/plugins.js ]; then
+    # Search for the line containing "AudioStreaming"
+    if grep -q '"name":"AudioStreaming"' "$www_folder"/js/plugins.js; then
+        # Replace the line with status set to false to unload
+        sed -i 's/\("name":"AudioStreaming","status"\):true/\1:false/' "$www_folder"/js/plugins.js
+        echo "Status of AudioStreaming set to false."
+    else
+        echo "Line containing AudioStreaming not found."
+    fi
+else
+    echo "plugins.js not found!"
+    exit 1
+fi
+
 if [ "$opus" = true ]; then
   echo "Converting audio to opus..."
   ./RMMVOpusConverter --ConverterLocation /usr/bin/ --SourceLocation "$www_folder" --OutputLocation ./opus
