@@ -125,7 +125,7 @@ game_exe_path=$(find ./extracted/ -type f -name *exe -printf '%h\n' -quit)
 www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
 if [ -n "$www_folder" ]; then
   echo "rpg mv detected"
-  package_json_old=$(find ./extracted/ -type f -name "package.json" -print -quit | head -n 1)
+  package_json_old=$(find ./extracted/ -type f -not -path '*/www/*' -name "package.json" -print -quit | head -n 1)
   cp "$package_json_old" ./package.json.old
 else
   echo "rpg mz detected"
