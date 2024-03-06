@@ -266,7 +266,7 @@ if [ -f "$www_folder"/js/plugins.js ]; then
     # Search for the line containing "AudioStreaming"
     if grep -q '"name":"AudioStreaming"' "$www_folder"/js/plugins.js; then
         # Replace the line with status set to false to unload
-        sed -i 's/\("name":"AudioStreaming","status"\):true/\1:false/' "$www_folder"/js/plugins.js
+        sed -i 's/\("name"\s*:\s*"AudioStreaming"\s*,"status"\s*:\s*\)true/\1false/' "$www_folder"/js/plugins.js
         echo "Status of AudioStreaming set to false."
     else
         echo "Line containing AudioStreaming not found."
