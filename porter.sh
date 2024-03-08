@@ -175,6 +175,7 @@ else
     "swiftshader"
     "game.exe"
     "game_en.exe"
+    "game_en_original.exe"
     "node.dll"
     "nw_elf.dll"
     "v8_context_snapshot.bin"
