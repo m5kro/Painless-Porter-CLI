@@ -125,6 +125,26 @@ fi
 # Look for the game path
 game_exe_path=$(find ./extracted/ -type f -name *exe -printf '%h\n' -quit)
 
+game_en_exe=$(find ./extracted/ -type f -iname "game_en.exe" -print -quit)
+if [ -n "$game_en_exe" ]; then
+  echo "Game_en.exe detected! assuming packed with enigmavb!"
+
+  command -v python  >/dev/null 2>&1 || { echo >&2 "python is required but it's not installed. Aborting."; exit 1; }
+  if [ ! -d ./evbunpack ]; then
+    python -m venv $XDG_DATA_HOME/porter/evbunpack
+    source $XDG_DATA_HOME/porter/evbunpack/bin/activate
+    pip install evbunpack
+    deactivate
+  else echo "evbunpack found, skipping venv creation."
+  fi
+
+  source $XDG_DATA_HOME/porter/evbunpack/bin/activate
+  evbunpack "$game_en_exe" ./en-extracted/
+  deactivate
+  echo "patch extracted and found! applying..."
+  cp -r ./en-extracted/* "$game_exe_path"
+fi
+
 # Look for the 'www' folder
 www_folder=$(find ./extracted/ -type d -name "www" -print -quit)
 if [ -n "$www_folder" ]; then
@@ -178,26 +198,6 @@ else
     echo "package.json missing"
     exit 1
   fi
-fi
-
-game_en_exe=$(find ./extracted/ -type f -iname "game_en.exe" -print -quit)
-if [ -n "$game_en_exe" ]; then
-  echo "Game_en.exe detected! assuming packed with enigmavb!"
-
-  command -v python  >/dev/null 2>&1 || { echo >&2 "python is required but it's not installed. Aborting."; exit 1; }
-  if [ ! -d ./evbunpack ]; then
-    python -m venv $XDG_DATA_HOME/porter/evbunpack
-    source $XDG_DATA_HOME/porter/evbunpack/bin/activate
-    pip install evbunpack
-    deactivate
-  else echo "evbunpack found, skipping venv creation."
-  fi
-
-  source $XDG_DATA_HOME/porter/evbunpack/bin/activate
-  evbunpack "$game_en_exe" ./en-extracted/
-  deactivate
-  echo "patch extracted and found! applying..."
-  cp -r ./en-extracted/* "$game_exe_path"
 fi
 
 if [ "$cheats" = true ]; then
