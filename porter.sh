@@ -1,5 +1,9 @@
 #!/bin/env bash
 
+if [[ -z "$XDG_DATA_HOME" ]]; then
+    XDG_DATA_HOME="$HOME/.local/share"
+fi
+
 # Function to display usage information
 function display_usage {
   echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] [--no-audio-rencode] [--no-pixijs-upgrade] <input_file>"
@@ -192,14 +196,8 @@ if [ -n "$game_en_exe" ]; then
   source $XDG_DATA_HOME/porter/evbunpack/bin/activate
   evbunpack "$game_en_exe" ./en-extracted/
   deactivate
-
-  translation=$(find ./en-extracted/ -type d -name "www" -print -quit)
-  if [ -n "$translation" ]; then
   echo "patch extracted and found! applying..."
-  cp -r "$translation" "$game_exe_path"
-  else
-  echo "failed to extract patch! manual extraction needed later."
-  fi
+  cp -r ./en-extracted/* "$game_exe_path"
 fi
 
 if [ "$cheats" = true ]; then
