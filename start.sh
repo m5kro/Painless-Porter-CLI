@@ -44,6 +44,9 @@ else
     if [ -f ~/.local/bin/cicpoffs ]; then
         echo "cicpoffs found!"
     else
+        if [ ! -d ~/.local/bin ]; then
+            mkdir ~/.local/bin
+        fi
         echo "cicpoffs not found! Downloading..."
         curl -L https://github.com/m5kro/cicpoffs/releases/download/binary/cicpoffs -o  ~/.local/bin/cicpoffs
         chmod +x ~/.local/bin/cicpoffs
