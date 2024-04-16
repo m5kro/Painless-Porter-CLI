@@ -6,12 +6,12 @@ fi
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-img-rencode] [--no-audio-rencode] [--no-pixijs-upgrade] <input_file>"
+  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-asset-clean] [--no-img-rencode] [--lossy] [--no-audio-rencode] [--no-video-rencode] [--no-pixijs-upgrade] [--custom-tl-link] [--upload-timeout <timeout>] <input_file>"
   exit 1
 }
 
 # nwjs version
-nwjsv=0.84.0
+nwjsv=0.85.0
 
 # Parse command line arguments
 extract=true
@@ -20,9 +20,15 @@ compress=true
 cleanup=true
 cheats=true
 decrypt=true
+clean=true
 webp=true
+lossless=true
 pixi=true
 opus=true
+vp9=true
+custom-tl-link=false
+# Default upload timeout
+upload_timeout=120
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -48,14 +54,30 @@ while [ "$#" -gt 0 ]; do
       decrypt=false
       webp=false
       ;;
+    --no-asset-clean)
+      clean=false
+      ;;
     --no-img-rencode)
       webp=false
+      ;;
+    --lossy)
+      lossless=false
       ;;
     --no-audio-rencode)
       opus=false
       ;;
+    --no-video-rencode)
+      vp9=false
+      ;;
     --no-pixijs-upgrade)
       pixi=false
+      ;;
+    --custom-tl-link)
+      custom_tl_link=true
+      ;;
+    --upload-timeout)
+      shift
+      upload_timeout="$1"
       ;;
     -*)
       display_usage
@@ -89,8 +111,8 @@ unzip nwjs-sdk-v"$nwjsv"-osx-x64.zip
 mkdir nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
 mkdir nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
 
-# Prep linux
-mkdir linux
+# Prep windows + linux
+mkdir win-linux
 
 # Prep Game_en.exe extraction location
 mkdir en-extracted
@@ -123,7 +145,20 @@ if [ "$extract" = true ]; then
 fi
 
 # Look for the game path
-game_exe_path=$(find ./extracted/ -type f -name *exe -printf '%h\n' -quit)
+game_exe_path=$(find ./extracted/ -type f -name *.exe -printf '%h\n' -quit)
+
+game_exe=$(find ./extracted/ -type f -iname "game.exe" -print -quit)
+game_exe_size=$(stat -c %s "$game_exe")
+game_exe_size_mb=$(echo "scale=2; $game_exe_size / (1024 * 1024)" | bc)
+if (( $(echo "$game_exe_size_mb > 5" | bc -l) )); then
+    echo "Game.exe is bigger than 5 megabytes, assuming evb packed..."
+    echo "Extracting..."
+    evbunpack "$game_exe" ./game-extracted/
+    cp -r ./game-extracted/* "$game_exe_path"
+    rm -rf ./game-extracted
+else
+    echo "Game.exe is not bigger than 5 megabytes, assuming regular nwjs executable..."
+fi
 
 game_en_exe=$(find ./extracted/ -type f -iname "game_en.exe" -print -quit)
 if [ -n "$game_en_exe" ]; then
@@ -175,10 +210,11 @@ else
     "swiftshader"
     "game.exe"
     "game_en.exe"
-    "game_en_original.exe"
     "node.dll"
     "nw_elf.dll"
     "v8_context_snapshot.bin"
+    "update-patch.bat"
+    "patch-config.txt"
   )
   # Loop through files and folders in the game directory
   for item in "$game_exe_path"/*; do
@@ -199,6 +235,17 @@ else
     echo "package.json missing"
     exit 1
   fi
+fi
+
+patchconfig=$(find ./extracted/ -type f -name "patch-config.txt" -print -quit)
+if [ -n "$patchconfig" ]; then
+  cp "$patchconfig" ./win-linux/patch-config.txt
+  echo "Patch config found!"
+fi
+
+if [ "$custom_tl_link" = true ]; then
+  echo "Using custom translation variables!"
+  cp ./patch-config.txt ./win-linux/patch-config.txt
 fi
 
 if [ "$cheats" = true ]; then
@@ -231,9 +278,6 @@ if [ -n "$images_encrypted" ]; then
     mkdir ./decrypted
     java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" ./decrypted
     find "$game_exe_path" -type f \( -name "*.rpgmvp" -o -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.png_" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
-    jq '.hasEncryptedImages = false | .hasEncryptedAudio = false' "$www_folder"/data/System.json > ./System.json.new
-    rm -f "$www_folder"/data/System.json
-    mv ./System.json.new "$www_folder"/data/System.json
     www_folder_decrypted=$(find ./decrypted -type d -name "www" -print -quit)
     cp -r "$www_folder_decrypted"/* "$www_folder"
     rm -rf ./decrypted
@@ -256,9 +300,20 @@ else
   fi
 fi
 
+if [ "$clean" = true ]; then
+  echo "Removing unused assets..."
+  python3 ./asset-cleaner/main_rpgmaker_strip_files.py -e titles2 -n -i "$www_folder"
+  rm -rf "$www_folder"/removed
+fi
+
 if [ "$webp" = true ]; then
   echo "Converting images to webp..."
-  ./optimize.sh "$game_exe_path"
+  if [ "$lossless" = true ]; then
+  	echo "Converting lossessly..."
+  	./optimize-lossless.sh "$game_exe_path"
+  else
+    ./optimize.sh "$game_exe_path"
+  fi
 fi
 
 if [ -f "$www_folder"/js/plugins.js ]; then
@@ -282,6 +337,22 @@ if [ "$opus" = true ]; then
   rm -rf ./opus
 fi
 
+if [ "$vp9" = true ]; then
+  echo "Converting Videos to vp9..."
+  ./vp9.sh "$www_folder"
+fi
+
+if [ -n "$images_encrypted" ]; then
+  echo "Images were encrypted. Encrypting..."
+  mkdir ./encrypt
+  java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt 
+  find "$www_folder/img" -mindepth 1 -maxdepth 1 ! -name 'system' -exec rm -rf {} +
+  rm -rf "$www_folder"/audio
+  new_www_folder=$(find ./encrypt -type d -name "www" -print -quit)
+  cp -r "$new_www_folder"/* "$www_folder"
+  rm -rf ./encrypt
+fi
+
 if [ "$pixi" = true ]; then
   echo "Upgrading pixi.js..."
   ./libs-update.sh "$game_exe_path"
@@ -289,15 +360,14 @@ fi
 
 if [ -n "$www_folder" ]; then
   # If 'www' folder exists, copy it to the uncompressed nwjs folder
-  cp -r "$www_folder" linux/www
-  cp ./pacapt linux/
+  cp -r "$www_folder" win-linux/www
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
   cp -r "$www_folder" nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
   # Put the game name in package.json so it runs
   game_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')
   jq ".name = \"$game_name\"" package.json.old > package.json
   rm -rf ./package.json.old
-  cp package.json linux/
+  cp package.json win-linux/
   cp package.json nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app/Contents/Resources/app.nw
   cp package.json nwjs-sdk-v"$nwjsv"-osx-x64/nwjs.app/Contents/Resources/app.nw
 else
@@ -305,13 +375,18 @@ else
   exit
 fi
 
-# Copy start.sh to the linux folder
-cp start.sh linux
-cp nwjs-manager.sh linux
+# Copy run files to the win-linux folder
+cp start.sh win-linux/
+cp update-patch.sh win-linux/
+cp nwjs-manager.sh win-linux/
+cp pacapt win-linux/
+cp start.bat win-linux/
+cp update-patch.bat win-linux/
 
-# Extract name without extension and append -Linux
-new_linux_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Linux"
-mv linux "$new_linux_folder_name"
+# Extract name without extension and append Operating systems
+
+new_linux_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Win-Linux"
+mv win-linux "$new_linux_folder_name"
 
 new_osx_arm64_folder_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-arm64.app"
 mv nwjs-sdk-v"$nwjsv"-osx-arm64/nwjs.app "$new_osx_arm64_folder_name"
@@ -328,13 +403,23 @@ if [ "$compress" = true ]; then
 fi
 
 if [ "$compress" = true ]; then
-    new_linux_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Linux.7z"
+	new_win_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-windows.7z"
+    new_linux_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-Win-Linux.7z"
     7z a -mx1 -mf- -m0=lzma2:a0 "$new_linux_archive_name" ./"$new_linux_folder_name"
     if [ "$upload" = true ]; then
       json_data=$(curl -s https://api.gofile.io/getServer)
       store_value=$(echo "$json_data" | jq -r '.data.server')
-      echo https://pixeldrain.com/u/$(curl -T "$new_linux_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
-      curl -F file=@"$new_linux_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage'>> gofile.txt &
+      echo https://pixeldrain.com/u/$(curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 --limit-rate 30M -T "$new_linux_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
+      curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 -F file=@"$new_linux_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage'>> gofile.txt &
+    fi
+
+    new_osx_x64_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-x64.7z"
+    7z a -mx1 -mf- -m0=lzma2:a0 "$new_osx_x64_archive_name" ./"$new_osx_x64_folder_name"
+    if [ "$upload" = true ]; then
+      json_data=$(curl -s https://api.gofile.io/getServer)
+      store_value=$(echo "$json_data" | jq -r '.data.server')
+      echo https://pixeldrain.com/u/$(curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 --limit-rate 30M -T "$new_osx_x64_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
+      curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 -F file=@"$new_osx_x64_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage' >> gofile.txt &
     fi
   
     new_osx_arm64_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-arm64.7z"
@@ -342,20 +427,9 @@ if [ "$compress" = true ]; then
     if [ "$upload" = true ]; then
       json_data=$(curl -s https://api.gofile.io/getServer)
       store_value=$(echo "$json_data" | jq -r '.data.server')
-      echo https://pixeldrain.com/u/$(curl -T "$new_osx_arm64_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
-      curl -F file=@"$new_osx_arm64_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage' >> gofile.txt &
+      echo https://pixeldrain.com/u/$(curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 --limit-rate 30M -T "$new_osx_arm64_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
+      curl --connect-timeout 5 --max-time "$upload_timeout" --retry 5 --retry-delay 0 --retry-max-time 40 -F file=@"$new_osx_arm64_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage' >> gofile.txt &
     fi
-  
-    new_osx_x64_archive_name=$(basename "$input_file" | sed 's/\(.*\)\..*/\1/')"-macos-x64.7z"
-    7z a -mx1 -mf- -m0=lzma2:a0 "$new_osx_x64_archive_name" ./"$new_osx_x64_folder_name"
-    if [ "$upload" = true ]; then
-      json_data=$(curl -s https://api.gofile.io/getServer)
-      store_value=$(echo "$json_data" | jq -r '.data.server')
-      echo https://pixeldrain.com/u/$(curl -T "$new_osx_x64_archive_name" https://pixeldrain.com/api/file/ | jq -r '.id') >> pixeldrain.txt &
-      #last one not put in background to keep script alive, useful for timing
-      curl -F file=@"$new_osx_x64_archive_name" https://"$store_value".gofile.io/uploadFile | jq -r '.data.downloadPage' >> gofile.txt
-    fi
-  
   wait
   
   echo "Uploading Complete!"

@@ -11,4 +11,4 @@ output_filename="$1"
 id="$2"
 
 # Run the curl command
-curl -o "$output_filename" "https://pixeldrain.com/api/file/$id"
+curl --connect-timeout 5 --max-time 180 --retry 5 --retry-delay 0 --retry-max-time 40 --limit-rate 30M -o "$output_filename" "https://pixeldrain.com/api/file/$id"

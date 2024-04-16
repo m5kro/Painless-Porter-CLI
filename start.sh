@@ -55,6 +55,8 @@ fi
 
 if [ -d ./www ] && [ -f ./package.json ]; then
     echo "www folder and package.json found!"
+    echo "checking for patch updates..."
+    ./update-patch.sh
 else
     echo "www folder or package.json missing!"
     exit
