@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 REM Check if patch-config.txt exists
 if not exist patch-config.txt (
-    echo "Config file (patch-config.txt) not found! Assuming no patching needed."
+    echo "Config file (patch-config.txt) not found! Assuming no mtl patching needed."
     exit /b
 )
 
@@ -24,11 +24,11 @@ set /p latest_patch_sha=<latest_patch_sha.txt
 REM Check if previous_patch_sha.txt exists
 if not exist previous_patch_sha.txt (
     echo "Previous SHA hash not found!"
-    set /p choice="Do you want to apply the latest patch? (Y/N): "
+    set /p choice="Do you want to download apply the latest MTL patch? (Y/N): "
     if /i "!choice!"=="Y" (
         goto download_extract
     ) else (
-        echo "Patching declined."
+        echo "MTL Patching declined."
         exit /b
     )
 )
@@ -42,15 +42,15 @@ set "latest_patch_sha=%latest_patch_sha: =%"
 
 REM Compare trimmed SHAs
 if "%latest_patch_sha%" neq "%previous_patch_sha%" (
-    echo "Update found!"
-    set /p choice="Do you want to update the patch? (Y/N): "
+    echo "MTL Update found!"
+    set /p choice="Do you want to update the MTL patch? (Y/N): "
     if /i "!choice!"=="Y" (
         goto download_extract
     ) else (
-        echo "Update declined."
+        echo "MTL Update declined."
     )
 ) else (
-    echo "Patch is up to date."
+    echo "MTL Patch is up to date."
 )
 
 REM Delete latest_patch_sha.txt
@@ -61,7 +61,7 @@ exit /b
 
 :download_extract
 REM Download zip file
-echo "Downloading latest patch..."
+echo "Downloading latest MTL patch..."
 powershell -Command "Invoke-WebRequest -Uri 'https://codeload.github.com/%username%/%repo%/zip/refs/heads/%branch%' -OutFile 'repo.zip'"
 
 REM Extract contents, overwriting conflicts
