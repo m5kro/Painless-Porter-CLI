@@ -78,6 +78,11 @@ if exist ".\%repo%-%branch%\www" (
 REM Modify package.json if necessary
 powershell -Command "$jsonContent = Get-Content -Raw -Path .\package.json | ConvertFrom-Json; $trimmedName = $jsonContent.name.Trim(); if (-not $trimmedName) { $jsonContent.name = '%repo%' } $jsonContent | ConvertTo-Json | Set-Content -Path .\package.json"
 
+if exist ".\%repo%-%branch%\www\js\plugins.js" (
+    REM Patch plugins.js for cheat menu
+    start MVPluginPatcher.exe
+)
+
 REM Clean up
 echo "Cleaning up..."
 del repo.zip

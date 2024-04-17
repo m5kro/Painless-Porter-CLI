@@ -26,7 +26,7 @@ lossless=true
 pixi=true
 opus=true
 vp9=true
-custom-tl-link=false
+customtllink=false
 # Default upload timeout
 upload_timeout=120
 
@@ -73,7 +73,7 @@ while [ "$#" -gt 0 ]; do
       pixi=false
       ;;
     --custom-tl-link)
-      custom_tl_link=true
+      customtllink=true
       ;;
     --upload-timeout)
       shift
@@ -145,7 +145,7 @@ if [ "$extract" = true ]; then
 fi
 
 # Look for the game path
-game_exe_path=$(find ./extracted/ -type f -name *.exe -printf '%h\n' -quit)
+game_exe_path=$(find ./extracted/ -type f -name '*.exe' -printf '%h\n' -quit)
 
 game_exe=$(find ./extracted/ -type f -iname "game.exe" -print -quit)
 game_exe_size=$(stat -c %s "$game_exe")
@@ -243,17 +243,9 @@ if [ -n "$patchconfig" ]; then
   echo "Patch config found!"
 fi
 
-if [ "$custom_tl_link" = true ]; then
+if [ "$customtllinkk" = true ]; then
   echo "Using custom translation variables!"
   cp ./patch-config.txt ./win-linux/patch-config.txt
-fi
-
-if [ "$cheats" = true ]; then
-  cp -r -f ./Cheat_Menu/* "$game_exe_path"
-  current_path=$(pwd)
-  cd "$game_exe_path"
-  ./patchPlugins.sh
-  cd "$current_path"
 fi
 
 # Look for the 'www' folder again
@@ -358,6 +350,14 @@ if [ "$pixi" = true ]; then
   ./libs-update.sh "$game_exe_path"
 fi
 
+if [ "$cheats" = true ]; then
+  cp -r -f ./Cheat_Menu/* "$game_exe_path"
+  current_path=$(pwd)
+  cd "$game_exe_path"
+  ./patchPlugins.sh
+  cd "$current_path"
+fi
+
 if [ -n "$www_folder" ]; then
   # If 'www' folder exists, copy it to the uncompressed nwjs folder
   cp -r "$www_folder" win-linux/www
@@ -382,6 +382,8 @@ cp nwjs-manager.sh win-linux/
 cp pacapt win-linux/
 cp start.bat win-linux/
 cp update-patch.bat win-linux/
+cp MVPluginPatcher.exe win-linux/
+cp plugins_patch.txt win-linux/
 
 # Extract name without extension and append Operating systems
 
