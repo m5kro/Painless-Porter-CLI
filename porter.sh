@@ -334,7 +334,7 @@ if [ "$vp9" = true ]; then
   ./vp9.sh "$www_folder"
 fi
 
-if [ -n "$images_encrypted" ]; then
+if $images_encrypted; then
   echo "Images were encrypted. Encrypting..."
   mkdir ./encrypt
   java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt 
@@ -354,7 +354,7 @@ if [ "$cheats" = true ]; then
   cp -r -f ./Cheat_Menu/* "$game_exe_path"
   current_path=$(pwd)
   cd "$game_exe_path"
-  ./patchPlugins.sh
+  ./plugin-patcher
   cd "$current_path"
 fi
 
@@ -383,6 +383,7 @@ cp pacapt win-linux/
 cp start.bat win-linux/
 cp update-patch.bat win-linux/
 cp MVPluginPatcher.exe win-linux/
+cp Cheat_Menu/plugin-patcher win-linux/
 cp plugins_patch.txt win-linux/
 
 # Extract name without extension and append Operating systems
