@@ -45,7 +45,7 @@ fi
 
 if [ -f "$game_dir"/www/icon/icon.png ]
 then
-    oxipng --opt max --strip all "$game_dir"/www/icon/icon.png
+    oxipng --opt max --fix --strip all "$game_dir"/www/icon/icon.png
 else
     echo >&2 "Icon doesn't exist. Ignoring."
 fi

@@ -6,7 +6,7 @@ fi
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-asset-clean] [--no-img-rencode] [--lossy] [--no-audio-rencode] [--no-video-rencode] [--no-pixijs-upgrade] [--custom-tl-link] [--upload-timeout <timeout>] <input_file>"
+  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-rencrypt] [--no-asset-clean] [--no-img-rencode] [--lossy] [--no-audio-rencode] [--no-video-rencode] [--no-pixijs-upgrade] [--custom-tl-link] [--upload-timeout <timeout>] <input_file>"
   exit 1
 }
 
@@ -20,6 +20,7 @@ compress=true
 cleanup=true
 cheats=true
 decrypt=true
+rencrypt=true
 clean=true
 webp=true
 lossless=true
@@ -53,6 +54,9 @@ while [ "$#" -gt 0 ]; do
     --no-decrypt)
       decrypt=false
       webp=false
+      ;;
+    --no-rencrypt)
+      rencrypt=false
       ;;
     --no-asset-clean)
       clean=false
@@ -215,6 +219,7 @@ else
     "v8_context_snapshot.bin"
     "update-patch.bat"
     "patch-config.txt"
+    "dazed"
   )
   # Loop through files and folders in the game directory
   for item in "$game_exe_path"/*; do
@@ -262,33 +267,42 @@ if [ "$webp" = true ]; then
   fi
 fi
 
-# Check if images are encrypted
-images_encrypted=$(jq -r .hasEncryptedImages "$www_folder/data/System.json")
-if [ -n "$images_encrypted" ]; then
-  if $images_encrypted; then
-    echo "Images are encrypted. Decrypting..."
-    mkdir ./decrypted
-    java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" ./decrypted
-    find "$game_exe_path" -type f \( -name "*.rpgmvp" -o -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.png_" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
-    www_folder_decrypted=$(find ./decrypted -type d -name "www" -print -quit)
-    cp -r "$www_folder_decrypted"/* "$www_folder"
-    rm -rf ./decrypted
-  else
-    echo "Images are unencrypted"
-  fi
-else
-  # Exclude Loading.png and Window.png from the check
-  manual_check=$(find "$www_folder"/img -type f \( -name "*.png" ! \( -name "Loading.png" -o -name "Window.png" \) \) -print -quit)
-  if [ -n "$manual_check" ]; then
-    echo "Images are unencrypted"
-  else
-    echo "Unable to determine encryption! Manual decryption needed. Would you like to continue?"
-    read -p "Continue? (y/n) " -n 1 -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      echo "Exiting"
-      exit 1
+if [ "$decrypt" = true ]; then
+  # Check if images are encrypted
+  images_encrypted=$(jq -r .hasEncryptedImages "$www_folder/data/System.json")
+  audio_encrypted=$(jq -r .hasEncryptedAudio "$www_folder/data/System.json")
+
+  if [ -n "$images_encrypted" ] && [ -n "$audio_encrypted" ]; then
+    if $images_encrypted || $audio_encrypted; then
+      echo "Assets are encrypted. Decrypting..."
+      mkdir ./decrypted
+      java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" ./decrypted
+      decrypted_www_folder=$(find ./decrypted -type d -name "www" -print -quit)
+      if $images_encrypted; then
+        find "$game_exe_path" -type f \( -name "*.rpgmvp"-o -name "*.png_" \) -delete
+        cp -r $decrypted_www_folder/img/* "$www_folder/img"
+      fi
+      if $audio_encrypted; then
+        find "$game_exe_path" -type f \( -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
+        cp -r $decrypted_www_folder/audio/* "$www_folder/audio"
+      fi
+      rm -rf ./decrypted
+    else
+      echo "Images are unencrypted"
     fi
-    webp=false
+  else
+    # Exclude Loading.png and Window.png from the check
+    manual_check=$(find "$www_folder/img" -type f \( -name "*.png" ! \( -name "Loading.png" -o -name "Window.png" \) \) -print -quit)
+    if [ -n "$manual_check" ]; then
+      echo "Images are unencrypted"
+    else
+      echo "Unable to determine encryption! Manual decryption needed. Would you like to continue?"
+      read -p "Continue? (y/n) " -n 1 -r
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Exiting"
+        exit 1
+      fi
+    fi
   fi
 fi
 
@@ -334,15 +348,28 @@ if [ "$vp9" = true ]; then
   ./vp9.sh "$www_folder"
 fi
 
-if $images_encrypted; then
-  echo "Images were encrypted. Encrypting..."
-  mkdir ./encrypt
-  java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt 
-  find "$www_folder/img" -mindepth 1 -maxdepth 1 ! -name 'system' -exec rm -rf {} +
-  rm -rf "$www_folder"/audio
-  new_www_folder=$(find ./encrypt -type d -name "www" -print -quit)
-  cp -r "$new_www_folder"/* "$www_folder"
-  rm -rf ./encrypt
+if $rencrypt && $decrypt; then
+  if [ -n "$images_encrypted" ] && [ -n "$audio_encrypted" ]; then
+    if $images_encrypted || $audio_encrypted; then
+      echo "Assets were encrypted. Encrypting..."
+      mkdir ./encrypt
+      java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt 
+      new_www_folder=$(find ./encrypt -type d -name "www" -print -quit)
+      if [ -n "$images_encrypted" ]; then
+        if $images_encrypted; then
+          find "$www_folder/img" -mindepth 1 -maxdepth 1 ! -name 'system' -exec rm -rf {} +
+          cp -r "$new_www_folder"/img/* "$www_folder"/img/
+        fi
+      fi
+      if [ -n "$audio_encrypted" ]; then
+        if $audio_encrypted; then
+          rm -rf "$www_folder"/audio
+          cp -r "$new_www_folder"/audio/* "$www_folder"/audio/
+        fi
+      fi
+      rm -rf ./encrypt
+    fi
+  fi
 fi
 
 if [ "$pixi" = true ]; then
