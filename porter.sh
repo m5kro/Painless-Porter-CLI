@@ -364,12 +364,18 @@ if $rencrypt && $decrypt; then
       if [ -n "$audio_encrypted" ]; then
         if $audio_encrypted; then
           rm -rf "$www_folder"/audio
-          cp -r "$new_www_folder"/audio/* "$www_folder"/audio/
+          cp -r "$new_www_folder"/audio "$www_folder"/audio
         fi
       fi
       rm -rf ./encrypt
     fi
   fi
+fi
+
+if [ "$rencrypt" = false ] && [ "$decrypt" = true ]; then
+  jq '.hasEncryptedImages = false | .hasEncryptedAudio = false' "$www_folder"/data/System.json > ./System.json.new
+  rm -f "$www_folder"/data/System.json
+  mv ./System.json.new "$www_folder"/data/System.json
 fi
 
 if [ "$pixi" = true ]; then
