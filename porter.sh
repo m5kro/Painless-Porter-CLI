@@ -13,6 +13,9 @@ function display_usage {
 # nwjs version
 nwjsv=0.85.0
 
+# Encryption filetype is rpgmvp for images and rpgmvo for audio
+ismvfile=false
+
 # Parse command line arguments
 extract=true
 upload=true
@@ -279,6 +282,9 @@ if [ "$decrypt" = true ]; then
       java -jar RPG.Maker.MV.Decrypter_0.4.2.jar decrypt "$www_folder" ./decrypted
       decrypted_www_folder=$(find ./decrypted -type d -name "www" -print -quit)
       if $images_encrypted; then
+        if [ -n $(find "$game_exe_path" -type f -name "*.rpgmvp") ]; then
+          ismvfile=true
+        fi
         find "$game_exe_path" -type f \( -name "*.rpgmvp"-o -name "*.png_" \) -delete
         cp -r $decrypted_www_folder/img/* "$www_folder/img"
       fi
@@ -353,8 +359,13 @@ if $rencrypt && $decrypt; then
     if $images_encrypted || $audio_encrypted; then
       echo "Assets were encrypted. Encrypting..."
       mkdir ./encrypt
-      java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt 
+      java -jar RPG.Maker.MV.Decrypter_0.4.2.jar encrypt "$www_folder" ./encrypt "$ismvfile"
       new_www_folder=$(find ./encrypt -type d -name "www" -print -quit)
+      if [ "$ismvfile" = true ]; then
+        find ./encrypt -type f -name "*.rpgmvp" -exec bash -c 'mv "$0" "${0%.rpgmvp}.png_"' {} \;
+        find ./encrypt -type f -name "*.rpgmvm" -exec bash -c 'mv "$0" "${0%.rpgmvm}.m4a_"' {} \;
+        find ./encrypt -type f -name "*.rpgmvo" -exec bash -c 'mv "$0" "${0%.rpgmvo}.ogg_"' {} \;
+      fi
       if [ -n "$images_encrypted" ]; then
         if $images_encrypted; then
           find "$www_folder/img" -mindepth 1 -maxdepth 1 ! -name 'system' -exec rm -rf {} +
