@@ -365,6 +365,10 @@ if $rencrypt && $decrypt; then
         find ./encrypt -type f -name "*.rpgmvp" -exec bash -c 'mv "$0" "${0%.rpgmvp}.png_"' {} \;
         find ./encrypt -type f -name "*.rpgmvm" -exec bash -c 'mv "$0" "${0%.rpgmvm}.m4a_"' {} \;
         find ./encrypt -type f -name "*.rpgmvo" -exec bash -c 'mv "$0" "${0%.rpgmvo}.ogg_"' {} \;
+      else
+        find ./encrypt -type f -name "*.png_" -exec bash -c 'mv "$0" "${0%.png_}.rpgmvp"' {} \;
+        find ./encrypt -type f -name "*.m4a_" -exec bash -c 'mv "$0" "${0%.m4a_}.rpgmvm"' {} \;
+        find ./encrypt -type f -name "*.ogg_" -exec bash -c 'mv "$0" "${0%.ogg_}.rpgmvo"' {} \;
       fi
       if [ -n "$images_encrypted" ]; then
         if $images_encrypted; then
