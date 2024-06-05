@@ -6,7 +6,7 @@ fi
 
 # Function to display usage information
 function display_usage {
-  echo "Usage: $0 [--folder] [--no-upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-rencrypt] [--no-asset-clean] [--no-img-rencode] [--lossy] [--no-audio-rencode] [--no-video-rencode] [--no-pixijs-upgrade] [--custom-tl-link] [--upload-timeout <timeout>] <input_file>"
+  echo "Usage: $0 [--folder] [--upload] [--no-compress] [--no-cleanup] [--no-cheats] [--no-decrypt] [--no-rencrypt] [--no-asset-clean] [--no-img-rencode] [--lossy] [--no-audio-rencode] [--no-video-rencode] [--no-pixijs-upgrade] [--custom-tl-link] [--upload-timeout <timeout>] <input_file>"
   exit 1
 }
 
@@ -18,7 +18,7 @@ ismvfile=false
 
 # Parse command line arguments
 extract=true
-upload=true
+upload=false
 compress=true
 cleanup=true
 cheats=true
@@ -39,9 +39,9 @@ while [ "$#" -gt 0 ]; do
     --folder)
       extract=false
       ;;
-    --no-upload)
-      upload=false
-      cleanup=false
+    --upload)
+      upload=true
+      cleanup=true
       ;;
     --no-compress)
       compress=false
