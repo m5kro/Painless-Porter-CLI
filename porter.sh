@@ -287,11 +287,11 @@ if [ "$decrypt" = true ]; then
           ismvfile=true
         fi
         find "$game_exe_path" -type f \( -name "*.rpgmvp"-o -name "*.png_" \) -delete
-        cp -r $decrypted_www_folder/img/* "$www_folder/img"
+        cp -r "$decrypted_www_folder"/img/* "$www_folder/img"
       fi
       if $audio_encrypted; then
         find "$game_exe_path" -type f \( -name "*.rpgmvm" -o -name "*.rpgmvo" -o -name "*.m4a_" -o -name "*.ogg_" \) -delete
-        cp -r $decrypted_www_folder/audio/* "$www_folder/audio"
+        cp -r "$decrypted_www_folder"/audio/* "$www_folder/audio"
       fi
       rm -rf ./decrypted
     else
