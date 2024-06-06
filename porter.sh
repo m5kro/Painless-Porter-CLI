@@ -20,7 +20,8 @@ ismvfile=false
 extract=true
 upload=false
 compress=true
-cleanup=false
+cleanup=true
+fullclean=false
 cheats=true
 decrypt=true
 rencrypt=true
@@ -41,7 +42,7 @@ while [ "$#" -gt 0 ]; do
       ;;
     --upload)
       upload=true
-      cleanup=true
+      fullclean=true
       ;;
     --no-compress)
       compress=false
@@ -486,9 +487,18 @@ if [ "$compress" = true ]; then
   echo "Uploading Complete!"
 fi
 
-
 # Cleanup
 if [ "$cleanup" = true ]; then
+  echo "Cleaning Up!"
+  rm -rf extracted
+  rm -rf en-extracted
+  rm -rf "$new_linux_folder_name"
+  rm -rf "$new_osx_arm64_folder_name"
+  rm -rf "$new_osx_x64_folder_name"
+fi
+
+# fullclean
+if [ "$fullclean" = true ]; then
   echo "Cleaning Up!"
   rm -rf extracted
   rm -rf en-extracted
